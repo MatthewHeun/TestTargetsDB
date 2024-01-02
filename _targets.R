@@ -25,8 +25,12 @@ list(
     command = "~/dolthub/testdb"
   ),
   tar_target(
+    name = N, 
+    command = 10,
+  ),
+  tar_target(
     name = data_target,
-    command = make_data(n = 100, db_path = db_path)
+    command = make_data(n = N, db_path = db_path)
   ),
   tar_target(
     name = model,
