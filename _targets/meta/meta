@@ -1,4 +1,7 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-data|stem|c10ee6326925466b|91bb26acfd985c14|dab19ebde5174f98|-2078757027||t19724.7944705519s|3d2c40b5e8ca1f8e|1743|rds|local|vector|||0.004||
-make_data|function|b4ff9bee82982bef|||||||||||||||
-model|stem|e365da489d8638a0|ae83bc723fe2997c|73538af48a58326b|1623637644||t19724.790513558s|4bab66ba4bee4440|108|rds|local|vector|||0.002||
+.Random.seed|object|098d4a94aa47e659|||||||||||||||
+data|stem|d14a90419744b02c|8638460621254bb6|143c56be31cb9ed4|-2078757027||t19724.8549368706s|0e696b453c03de61|85|rds|local|vector|||0.38||
+db_path|stem|2f148198b7edfa1d|cb52649eaa2a979a|ef46db3751d8e999|1428594201||t19724.8535720455s|d586f792a395948c|68|rds|local|vector|||0.003||
+make_data|function|f6e9300ba48e7e40|||||||||||||||
+model|stem||ae83bc723fe2997c|3aa53804e356b908|1623637644||t19724.8549371723s||0|rds|local|vector|||0.004||data must be a data.frame, environment, or list
+store_and_return_hash|function|bb5a49e91386f65b|||||||||||||||

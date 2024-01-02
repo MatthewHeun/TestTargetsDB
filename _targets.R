@@ -4,6 +4,8 @@
 #   https://books.ropensci.org/targets/walkthrough.html#inspect-the-pipeline
 
 # Load packages required to define the pipeline:
+library(DBI)
+library(doltr)
 library(targets)
 # library(tarchetypes) # Load other packages as needed.
 
@@ -19,8 +21,12 @@ tar_source()
 # Replace the target list below with your own:
 list(
   tar_target(
+    name = db_path, 
+    command = "~/dolthub/testdb"
+  ),
+  tar_target(
     name = data,
-    command = make_data(100)
+    command = make_data(db_path, 100)
   ),
   tar_target(
     name = model,
