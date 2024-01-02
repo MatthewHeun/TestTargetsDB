@@ -1,7 +1,9 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|098d4a94aa47e659|||||||||||||||
-data|stem|d14a90419744b02c|8638460621254bb6|143c56be31cb9ed4|-2078757027||t19724.8549368706s|0e696b453c03de61|85|rds|local|vector|||0.38||
-db_path|stem|2f148198b7edfa1d|cb52649eaa2a979a|ef46db3751d8e999|1428594201||t19724.8535720455s|d586f792a395948c|68|rds|local|vector|||0.003||
-make_data|function|f6e9300ba48e7e40|||||||||||||||
-model|stem||ae83bc723fe2997c|3aa53804e356b908|1623637644||t19724.8549371723s||0|rds|local|vector|||0.004||data must be a data.frame, environment, or list
-store_and_return_hash|function|bb5a49e91386f65b|||||||||||||||
+.Random.seed|object|459d79dd1a0fbdee|||||||||||||||
+data_target|stem|ec43fc7529184d8e|6bc2baa86f59fe4b|733c5e2efc6b7881|1211568756||t19724.8748523741s|a3c4b57a6f0085ec|90|rds|local|vector|||0.406||
+db_path|stem|2f148198b7edfa1d|cb52649eaa2a979a|ef46db3751d8e999|1428594201||t19724.8748473409s|d586f792a395948c|68|rds|local|vector|||0.003||
+load_table_from_hash|function|84846e93ddae9601|||||||||||||||
+make_data|function|d3e6214f6f1bea41|||||||||||||||
+make_model|function|9b508bf5817d3b99|||||||||||||||
+model|stem|1ed4b320b1473569|c1406bc442501a0e|0f2345ede869458a|1623637644||t19724.8774921652s|1254f8a9a0ffbd1f|107|rds|local|vector|||0.358||
+store_and_return_hash|function|8cc3aaa46e7e7f47|||||||||||||||
