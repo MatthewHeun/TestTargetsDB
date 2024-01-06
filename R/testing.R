@@ -1,5 +1,7 @@
 # Examples from https://www.datacareer.de/blog/connect-to-postgresql-with-r-a-step-by-step-example/
 
+library(DBI)
+
 conn <- dbConnect(RPostgres::Postgres(), 
                   dbname = "postgres", 
                   host = "localhost", 
