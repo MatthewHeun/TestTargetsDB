@@ -24,9 +24,26 @@ dbReadTable(conn, "test_table")
 
 dbRemoveTable(conn, "test_table")
 
-dbWriteTable(conn, name = "UKEnergy2000mats", Recca::UKEnergy2000mats)
+UKEnergy2000 <- Recca::UKEnergy2000mats |> 
+  dplyr::rename(matnames = "matrix.name", matvals = "matrix") 
+# Fails
+dbWriteTable(conn, name = "UKEnergy2000", UKEnergy2000)
 
-dbRemoveTable(conn, "UKEnergy2000mats")
+UKEnergy2000_tidy <- UKEnergy2000 |> 
+  matsindf::expand_to_tidy(drop = 0) 
+# Works
+dbWriteTable(conn, name = "UKEnergy2000_tidy", UKEnergy2000_tidy)
+
+
+
+|> 
+  tidyr::nest(matdfs = c(rownames, colnames, matvals, rowtypes, coltypes))
+
+dbWriteTable(conn, name = "UKEnergy2000", UKEnergy2000)
+
+dbReadTable(conn, name = "UKEnergy2000")
+
+dbRemoveTable(conn, "UKEnergy2000")
 
 dbDisconnect(conn)
 
