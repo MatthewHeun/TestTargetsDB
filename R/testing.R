@@ -56,11 +56,34 @@ dbExecute(conn, "CREATE TABLE df_nested (
                  id serial PRIMARY KEY,
                  Country text,
                  val integer[]);")
-
-
 dbListTables(conn)
+# Fails
+dbWriteTable(conn, name = "df_nested", value = df_nested, append = TRUE)
+dbRemoveTable(conn, "df_nested")
 
-dbWriteTable(conn, name = "df_nested", df_nested, append = TRUE)
+
+# Try to read and upload psut data frame
+psut_usa <- readRDS("~/Dropbox/Fellowship 1960-2015 PFU database/OutputData/PipelineReleases/psut/20231207T124854Z-73744/psut.rds") |> 
+  dplyr::filter(Country == "USA") |> 
+  tidyr::pivot_longer(names_to = "matnames", values_to = "matvals", 
+                      cols = c("R", "U", "U_feed", "U_EIOU", "r_EIOU", "V", 
+                               "Y", "S_units"))
+
+# Expanding takes about 35 s
+expanded_usa <- psut_usa |> 
+  matsindf::expand_to_tidy(drop = 0)
+# Writing the data into the database takes 2 sec locally
+dbWriteTable(conn, name = "expanded_usa", value = expanded_usa, overwrite = TRUE)
+
+# Reading the data out of the database takes 
+psut_usa_expanded_2 <- dbReadTable(conn, name = "expanded_usa")
+psut_usa_2 <- psut_usa_expanded_2 |> 
+  dplyr::group_by(Country, Method, Energy.type, Last.stage, Year, IEAMW, matnames) |> 
+  matsindf::collapse_to_matrices(matrix_class = "Matrix")
+
+  
+dbRemoveTable(conn, "db_usa")
+
 
 dbDisconnect(conn)
 
