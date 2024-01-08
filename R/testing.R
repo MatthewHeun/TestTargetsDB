@@ -52,10 +52,16 @@ df_nested <- tibble::tribble(~Country, ~Year, ~val,
   tidyr::nest(vals = c(Year, val))
 
 # Now create a nested table
-
+dbExecute(conn, "CREATE TABLE df_nested (
+                 id serial PRIMARY KEY,
+                 Country text,
+                 val integer[]);")
 
 
 dbListTables(conn)
+
+dbWriteTable(conn, name = "df_nested", df_nested, append = TRUE)
+
 dbDisconnect(conn)
 
 
