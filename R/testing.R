@@ -75,14 +75,14 @@ expanded_usa <- psut_usa |>
 # Writing the data into the database takes 2 sec locally
 dbWriteTable(conn, name = "expanded_usa", value = expanded_usa, overwrite = TRUE)
 
-# Reading the data out of the database takes 
-psut_usa_expanded_2 <- dbReadTable(conn, name = "expanded_usa")
-psut_usa_2 <- psut_usa_expanded_2 |> 
+# Reading the data out of the database takes less than 1 second locally
+expanded_usa_2 <- dbReadTable(conn, name = "expanded_usa")
+# Re-creating the matrix structure takes 36 sec locally
+psut_usa_2 <- expanded_usa_2 |> 
   dplyr::group_by(Country, Method, Energy.type, Last.stage, Year, IEAMW, matnames) |> 
   matsindf::collapse_to_matrices(matrix_class = "Matrix")
 
-  
-dbRemoveTable(conn, "db_usa")
+dbRemoveTable(conn, "expanded_usa")
 
 
 dbDisconnect(conn)
