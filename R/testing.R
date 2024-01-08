@@ -33,18 +33,29 @@ UKEnergy2000_tidy <- UKEnergy2000 |>
   matsindf::expand_to_tidy(drop = 0) 
 # Works
 dbWriteTable(conn, name = "UKEnergy2000_tidy", UKEnergy2000_tidy)
+dbRemoveTable(conn, "UKEnergy2000_tidy")
 
-
-
-|> 
+# Try to write a nested data frame.
+UKEnergy2000_nested <- UKEnergy2000_tidy |> 
   tidyr::nest(matdfs = c(rownames, colnames, matvals, rowtypes, coltypes))
+# Fails
+dbWriteTable(conn, name = "UKEnergy2000_nested", UKEnergy2000_nested)
 
-dbWriteTable(conn, name = "UKEnergy2000", UKEnergy2000)
+# Try with a table already created with a nested column
+df_nested <- tibble::tribble(~Country, ~Year, ~val, 
+                             "USA",    1990,   1, 
+                             "USA",    1991,   2, 
+                             "USA",    1992,   3, 
+                             "GBR",    1990,   4, 
+                             "GBR",    1991,   5,
+                             "GBR",    1992,   6) |> 
+  tidyr::nest(vals = c(Year, val))
 
-dbReadTable(conn, name = "UKEnergy2000")
+# Now create a nested table
 
-dbRemoveTable(conn, "UKEnergy2000")
 
+
+dbListTables(conn)
 dbDisconnect(conn)
 
 
