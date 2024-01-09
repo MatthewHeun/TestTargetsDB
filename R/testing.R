@@ -69,18 +69,30 @@ psut_usa <- readRDS("~/Dropbox/Fellowship 1960-2015 PFU database/OutputData/Pipe
                       cols = c("R", "U", "U_feed", "U_EIOU", "r_EIOU", "V", 
                                "Y", "S_units"))
 
-# Expanding takes about 35 s
+# Expanding takes about 35 sec on my Mac Studio
+# Expanding takes about 37 sec on my Macbook Pro
 expanded_usa <- psut_usa |> 
   matsindf::expand_to_tidy(drop = 0)
 # Writing the data into the database takes 2 sec locally
+# Writing the data into the database takes 6 sec on the VPN from home 
 dbWriteTable(conn, name = "expanded_usa", value = expanded_usa, overwrite = TRUE)
 
 # Reading the data out of the database takes less than 1 second locally
+# Reading the data out of the database takes 2.8 sec on the VPN from home
 expanded_usa_2 <- dbReadTable(conn, name = "expanded_usa")
-# Re-creating the matrix structure takes 36 sec locally
+# Re-creating the matrix structure takes 36 sec on my Mac Studio
+# Re-creating the matrix structure takes 41 sec on my Mac Book Pro
 psut_usa_2 <- expanded_usa_2 |> 
   dplyr::group_by(Country, Method, Energy.type, Last.stage, Year, IEAMW, matnames) |> 
   matsindf::collapse_to_matrices(matrix_class = "Matrix")
+
+# Try nesting
+psut_usa_2 <- expanded_usa_2 |> 
+  tidyr::nest(rcv = c(rownames, colnames, matvals, rowtypes, coltypes))
+
+
+dbListTables(conn)
+
 
 dbRemoveTable(conn, "expanded_usa")
 
