@@ -1,4 +1,7 @@
-store_and_return_hash <- function(x, conn_args, table_name) {
+store_and_return_hash <- function(x, conn_args, table_name, 
+                                  hash_colname = "group_hash",
+                                  algo = "md5", 
+                                  .ungrouped_cols = ".ungrouped_cols") {
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(), 
                          dbname = "playground", 
                          host = "153.106.113.125",
@@ -6,11 +9,18 @@ store_and_return_hash <- function(x, conn_args, table_name) {
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
   
-  # Create a hash of x
+  # Create a hash of the groups of x
+  group_hash_df <- x |> 
+    tidyr::nest(.key = .ungrouped_cols) |> 
+    dplyr::mutate(
+      "{hash_colname}" := digest::digest(.data), 
+      "{.ungrouped_cols}" := NULL
+    )
+  
   DBI::dbWriteTable(conn = conn, name = table_name, value = x, overwrite = TRUE)
   print("wrote table")
   # Save, table, keys, and hash
-  list(table = table_name, hash = rlang::hash(x))
+  list(table = table_name, hash = group_hash)
 }
 
 
@@ -53,11 +63,13 @@ make_df <- function(conn_args) {
                   "B", 3, 
                   "B", 4, 
                   "C", 5) |>
+    dplyr::group_by(Country) |> 
     store_and_return_hash(conn_args = conn_args, table_name = "df")
 }
 
 
 process <- function(DF, conn_args, countries) {
+print(countries)
   DF |> 
     load_table_from_hash(conn_args)
 }
