@@ -50,7 +50,7 @@ list(
   ), 
   tar_target(
     name = Processed, 
-    command = process(DF, conn_args, countries = Countries), 
-    pattern = map(Countries)
+    command = process(DF, conn_args), 
+    iteration = "group"
   )
 )

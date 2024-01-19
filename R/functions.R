@@ -64,12 +64,17 @@ make_df <- function(conn_args) {
                   "B", 4, 
                   "C", 5) |>
     dplyr::group_by(Country) |> 
+    targets::tar_group() |> 
     store_and_return_hash(conn_args = conn_args, table_name = "df")
 }
 
 
-process <- function(DF, conn_args, countries) {
-print(countries)
+process <- function(DF, conn_args) {
+print(DF)
   DF |> 
-    load_table_from_hash(conn_args)
+    load_table_from_hash(conn_args) |> 
+    dplyr::mutate(
+      valplus1 = val + 1
+    ) |> 
+    dplyr::summarise(val = sum(val), valplus1 = sum(valplus1))
 }
