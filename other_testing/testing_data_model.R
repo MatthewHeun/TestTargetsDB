@@ -87,7 +87,7 @@ bench::mark(psut_usa_read <- dbReadTable(conn, "psut_usa") |>
     matvals = list(Matrix::sparseMatrix(i = i, j = j, x = x))
   ))
 
-
+dbRemoveTable(conn, "psut_usa")
 
 # Unnest and collapse
 # run timings on all of the above

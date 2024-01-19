@@ -5,7 +5,7 @@
 library(DBI)
 
 conn <- dbConnect(drv = RPostgres::Postgres(), 
-                  dbname = "mkh2", 
+                  dbname = "playground", 
                   host = "153.106.113.125", 
                   port = 5432, 
                   user = "mkh2")

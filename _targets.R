@@ -5,7 +5,6 @@
 
 # Load packages required to define the pipeline:
 library(DBI)
-library(doltr)
 library(targets)
 # library(tarchetypes) # Load other packages as needed.
 
@@ -18,22 +17,40 @@ tar_option_set(
 tar_source()
 # source("other_functions.R") # Source other scripts as needed.
 
+conn_args <- list(drv = RPostgres::Postgres(),
+                  dbname = "playground",
+                  host = "153.106.113.125",
+                  port = 5432,
+                  user = "mkh2")
+
+# dbDisconnect(conn)
+
 # Replace the target list below with your own:
 list(
+  # tar_target(
+  #   name = N, 
+  #   command = 10,
+  # ),
+  # tar_target(
+  #   name = DataTarget,
+  #   command = make_data(n = N)
+  # ),
+  # tar_target(
+  #   name = Model,
+  #   command = make_model(data_hash = DataTarget, conn)
+  # ), 
+  
   tar_target(
-    name = db_path, 
-    command = "~/dolthub/testdb"
+    name = Countries, 
+    command = c("A", "B", "C")
   ),
   tar_target(
-    name = N, 
-    command = 10,
-  ),
+    name = DF, 
+    command = make_df(conn_args)
+  ), 
   tar_target(
-    name = data_target,
-    command = make_data(n = N, db_path = db_path)
-  ),
-  tar_target(
-    name = model,
-    command = make_model(data_hash = data_target, db_path = db_path)
+    name = Processed, 
+    command = process(DF, conn_args, countries = Countries), 
+    pattern = map(Countries)
   )
 )
