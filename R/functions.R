@@ -20,7 +20,7 @@ store_and_return_hash <- function(x, conn_args, table_name,
   DBI::dbWriteTable(conn = conn, name = table_name, value = x, overwrite = TRUE)
   print("wrote table")
   # Save, table, keys, and hash
-  list(table = table_name, hash = group_hash)
+  list(table = table_name, hash = group_hash_df)
 }
 
 
