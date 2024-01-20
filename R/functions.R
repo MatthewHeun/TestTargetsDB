@@ -1,3 +1,20 @@
+
+
+#' Store a grouped data frame in a database for use in a targets pipeline
+#' 
+#' The grouping variables of `x` are retained.
+#'
+#' @param x 
+#' @param conn_args 
+#' @param table_name 
+#' @param hash_colname 
+#' @param algo 
+#' @param .ungrouped_cols 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 store_and_return_hash <- function(x, conn_args, table_name, 
                                   hash_colname = "group_hash",
                                   algo = "md5", 
@@ -9,22 +26,22 @@ store_and_return_hash <- function(x, conn_args, table_name,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
   
-  # Create a hash of the groups of x
-  group_hash_df <- x |> 
-    tidyr::nest(.key = .ungrouped_cols) |> 
+  DBI::dbWriteTable(conn = conn, name = table_name, value = x, overwrite = TRUE)
+  # Save, table, keys, and hash
+  # Create a hash of the nested data frame
+  nested_df <-  x |> 
+    tidyr::nest(.key = .ungrouped_cols)
+  group_hash_df <- nested_df |> 
     dplyr::mutate(
-      "{hash_colname}" := digest::digest(.data), 
+      "{hash_colname}" := digest::digest(.data, algo = algo), 
       "{.ungrouped_cols}" := NULL
     )
-  
-  DBI::dbWriteTable(conn = conn, name = table_name, value = x, overwrite = TRUE)
-  print("wrote table")
-  # Save, table, keys, and hash
   list(table = table_name, hash = group_hash_df)
 }
 
 
-load_table_from_hash <- function(a_hash, conn_args) {
+load_table_from_hash <- function(a_hash, conn_args, 
+                                 .ungrouped_cols = ".ungrouped_cols") {
   conn <- dbConnect(drv = RPostgres::Postgres(), 
                     dbname = "playground", 
                     host = "153.106.113.125",
@@ -33,10 +50,11 @@ load_table_from_hash <- function(a_hash, conn_args) {
   on.exit(DBI::dbDisconnect(conn))
   
   table_name <- a_hash$table
-  # Get hash value from the DB
-  # If unchanged, simply return a_hash
-  # If changed, read the table
-  DBI::dbReadTable(conn = conn, name = table_name)
+  grp_vars <- a_hash$hash |> 
+    names() |> 
+    setdiff(.ungrouped_cols)
+  DBI::dbReadTable(conn = conn, name = table_name) |> 
+    dplyr::group_by(grp_vars)
 }
 
 
@@ -65,6 +83,8 @@ make_df <- function(conn_args) {
                   "C", 5) |>
     dplyr::group_by(Country) |> 
     targets::tar_group() |> 
+    # tar_group removes R's groups!
+    dplyr::group_by(Country, tar_group) |> 
     store_and_return_hash(conn_args = conn_args, table_name = "df")
 }
 

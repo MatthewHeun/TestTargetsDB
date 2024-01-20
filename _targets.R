@@ -17,8 +17,7 @@ tar_option_set(
 tar_source()
 # source("other_functions.R") # Source other scripts as needed.
 
-conn_args <- list(drv = RPostgres::Postgres(),
-                  dbname = "playground",
+conn_args <- list(dbname = "playground",
                   host = "153.106.113.125",
                   port = 5432,
                   user = "mkh2")
@@ -44,10 +43,12 @@ list(
     name = Countries, 
     command = c("A", "B", "C")
   ),
+  
   tar_target(
     name = DF, 
     command = make_df(conn_args)
   ), 
+
   tar_target(
     name = Processed, 
     command = process(DF, conn_args), 
