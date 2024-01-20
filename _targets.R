@@ -52,6 +52,7 @@ list(
   tar_target(
     name = Processed, 
     command = process(DF, conn_args), 
+    pattern = map(DF), 
     iteration = "group"
   )
 )

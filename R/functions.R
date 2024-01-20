@@ -16,8 +16,9 @@
 #'
 #' @examples
 store_and_return_hash <- function(x, conn_args, table_name, 
-                                  hash_colname = "group_hash",
                                   algo = "md5", 
+                                  .hash_colname = "group_hash",
+                                  .table_colname = ".table_name",
                                   .ungrouped_cols = ".ungrouped_cols") {
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(), 
                          dbname = "playground", 
@@ -31,16 +32,18 @@ store_and_return_hash <- function(x, conn_args, table_name,
   # Create a hash of the nested data frame
   nested_df <-  x |> 
     tidyr::nest(.key = .ungrouped_cols)
-  group_hash_df <- nested_df |> 
+  nested_df |> 
     dplyr::mutate(
-      "{hash_colname}" := digest::digest(.data, algo = algo), 
+      "{.table_colname}" :=  table_name, 
+      "{.hash_colname}" := digest::digest(.data[[.ungrouped_cols]], algo = algo), 
       "{.ungrouped_cols}" := NULL
     )
-  list(table = table_name, hash = group_hash_df)
 }
 
 
 load_table_from_hash <- function(a_hash, conn_args, 
+                                 .hash_colname = "group_hash",
+                                 .table_colname = ".table_name",
                                  .ungrouped_cols = ".ungrouped_cols") {
   conn <- dbConnect(drv = RPostgres::Postgres(), 
                     dbname = "playground", 
@@ -48,13 +51,18 @@ load_table_from_hash <- function(a_hash, conn_args,
                     port = 5432, 
                     user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
+
+  table_name <- a_hash[[.table_colname]] |> 
+    unique()
+  assertthat::assert_that(length(table_name) == 1)
+  grp_vars <- a_hash |> 
+    colnames() |> 
+    setdiff(c(.hash_colname, .table_colname, .ungrouped_cols, "tar_group"))
+  out <- DBI::dbReadTable(conn = conn, name = table_name)
+print(out)  
   
-  table_name <- a_hash$table
-  grp_vars <- a_hash$hash |> 
-    names() |> 
-    setdiff(.ungrouped_cols)
-  DBI::dbReadTable(conn = conn, name = table_name) |> 
-    dplyr::group_by(grp_vars)
+  out |> 
+    dplyr::group_by(.data[[grp_vars]])
 }
 
 
@@ -90,7 +98,6 @@ make_df <- function(conn_args) {
 
 
 process <- function(DF, conn_args) {
-print(DF)
   DF |> 
     load_table_from_hash(conn_args) |> 
     dplyr::mutate(
