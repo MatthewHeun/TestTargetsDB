@@ -55,10 +55,16 @@ load_table_from_hash <- function(a_hash, conn_args,
   table_name <- a_hash[[.table_colname]] |> 
     unique()
   assertthat::assert_that(length(table_name) == 1)
+  this_tar_group <- a_hash[["tar_group"]] |> 
+    unique()
+  assertthat::assert_that(length(this_tar_group) == 1)
   grp_vars <- a_hash |> 
     colnames() |> 
-    setdiff(c(.hash_colname, .table_colname, .ungrouped_cols, "tar_group"))
-  out <- DBI::dbReadTable(conn = conn, name = table_name)
+    setdiff(c(.hash_colname, .table_colname, .ungrouped_cols))
+  # Here, we should read only the rows we need to read.
+  # out <- DBI::dbReadTable(conn = conn, name = table_name)
+  out <- dbplyr::filter(tar_group == this_tar_group) |> 
+    dplyr::show_query()
 print(out)  
   
   out |> 
