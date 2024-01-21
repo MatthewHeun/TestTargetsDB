@@ -26,29 +26,10 @@ conn_args <- list(dbname = "playground",
 
 # Replace the target list below with your own:
 list(
-  # tar_target(
-  #   name = N, 
-  #   command = 10,
-  # ),
-  # tar_target(
-  #   name = DataTarget,
-  #   command = make_data(n = N)
-  # ),
-  # tar_target(
-  #   name = Model,
-  #   command = make_model(data_hash = DataTarget, conn)
-  # ), 
-  
-  tar_target(
-    name = Countries, 
-    command = c("A", "B", "C")
-  ),
-  
   tar_target(
     name = DF, 
     command = make_df(conn_args)
   ), 
-
   tar_target(
     name = Processed, 
     command = process(DF, conn_args), 

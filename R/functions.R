@@ -15,16 +15,16 @@
 #' @export
 #'
 #' @examples
-store_and_return_hash <- function(x, conn_args, table_name, 
+store_and_return_hash <- function(x, conn_args, table_name,
                                   algo = "md5", 
                                   .hash_colname = "group_hash",
                                   .table_colname = ".table_name",
                                   .ungrouped_cols = ".ungrouped_cols") {
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(), 
-                         dbname = "playground", 
-                         host = "153.106.113.125",
-                         port = 5432, 
-                         user = "mkh2")
+                         dbname = conn_args$dbname, 
+                         host = conn_args$host,
+                         port = conn_args$port, 
+                         user = conn_args$user)
   on.exit(DBI::dbDisconnect(conn))
   
   DBI::dbWriteTable(conn = conn, name = table_name, value = x, overwrite = TRUE)
@@ -45,11 +45,11 @@ load_table_from_hash <- function(a_hash, conn_args,
                                  .hash_colname = "group_hash",
                                  .table_colname = ".table_name",
                                  .ungrouped_cols = ".ungrouped_cols") {
-  conn <- dbConnect(drv = RPostgres::Postgres(), 
-                    dbname = "playground", 
-                    host = "153.106.113.125",
-                    port = 5432, 
-                    user = "mkh2")
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(), 
+                         dbname = conn_args$dbname, 
+                         host = conn_args$host,
+                         port = conn_args$port, 
+                         user = conn_args$user)
   on.exit(DBI::dbDisconnect(conn))
 
   table_name <- a_hash[[.table_colname]] |> 
@@ -62,29 +62,11 @@ load_table_from_hash <- function(a_hash, conn_args,
     colnames() |> 
     setdiff(c(.hash_colname, .table_colname, .ungrouped_cols))
   # Here, we should read only the rows we need to read.
-  # out <- DBI::dbReadTable(conn = conn, name = table_name)
-  out <- dbplyr::filter(tar_group == this_tar_group) |> 
-    dplyr::show_query()
-print(out)  
-  
-  out |> 
-    dplyr::group_by(.data[[grp_vars]])
+  out <- dplyr::tbl(conn, table_name) |> 
+    dplyr::filter(tar_group == this_tar_group) |> 
+    dplyr::collect() |> 
+    dplyr::group_by(!!as.name(grp_vars))
 }
-
-
-
-make_data <- function(n, conn_args) {
-
-  tibble(x = rnorm(n), y = rnorm(n)) |> 
-    store_and_return_hash(conn_args, table_name = "data")
-}
-
-
-make_model <- function(data_hash, conn_args) {
-  the_table <- load_table_from_hash(a_hash = data_hash, conn_args = conn_args)
-  coefficients(lm(y ~ x, data = the_table))
-}
-
 
 
 
@@ -108,6 +90,5 @@ process <- function(DF, conn_args) {
     load_table_from_hash(conn_args) |> 
     dplyr::mutate(
       valplus1 = val + 1
-    ) |> 
-    dplyr::summarise(val = sum(val), valplus1 = sum(valplus1))
+    )
 }
