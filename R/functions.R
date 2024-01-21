@@ -80,8 +80,6 @@ make_df <- function(conn_args) {
                   "C", 5) |>
     dplyr::group_by(Country) |> 
     targets::tar_group() |> 
-    # tar_group removes R's groups!
-    dplyr::group_by(Country, tar_group) |> 
     store_and_return_hash(conn_args = conn_args, table_name = "df")
 }
 
