@@ -8,7 +8,8 @@ conn <- dbConnect(drv = RPostgres::Postgres(),
                   user = "mkh2")
 
 dbListTables(conn)
-dbRemoveTable(conn, "data")
+dbReadTable(conn, "df")
+dbRemoveTable(conn, "df")
 
 dbDisconnect(conn)
 

@@ -27,12 +27,16 @@ conn_args <- list(dbname = "playground",
 # Replace the target list below with your own:
 list(
   tar_target(
+    name = KeyCols, 
+    command = c("Country", "Last.stage")
+  ),
+  tar_target(
     name = DF, 
-    command = make_df(conn_args)
+    command = make_df(conn_args, key_cols = KeyCols)
   ), 
   tar_target(
     name = Processed, 
-    command = process(DF, conn_args), 
+    command = process(DF, conn_args, key_cols = KeyCols), 
     pattern = map(DF), 
     iteration = "group"
   )
