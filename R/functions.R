@@ -7,19 +7,22 @@
 #' @param x 
 #' @param conn_args 
 #' @param table_name 
-#' @param hash_colname 
-#' @param algo 
-#' @param .ungrouped_cols 
+#' @param key_cols
+#' @param .table_colname 
+#' @param .nested_data_col 
+#' @param .nested_data_hash_col 
+#' @param .algo 
 #'
 #' @return
 #' @export
 #'
 #' @examples
-store_and_return_hash <- function(x, conn_args, table_name,
-                                  algo = "md5", 
-                                  .hash_colname = "group_hash",
+store_and_return_hash <- function(x, conn_args, table_name, 
+                                  tar_group_colname = "tar_group",
                                   .table_colname = ".table_name",
-                                  .ungrouped_cols = ".ungrouped_cols") {
+                                  .nested_data_colname = ".nested_data_col", 
+                                  .nested_data_hash_colname = ".nested_data_hash_col", 
+                                  .algo = "md5") {
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(), 
                          dbname = conn_args$dbname, 
                          host = conn_args$host,
@@ -27,24 +30,26 @@ store_and_return_hash <- function(x, conn_args, table_name,
                          user = conn_args$user)
   on.exit(DBI::dbDisconnect(conn))
   
+  # Eventually, do a replace_join() here
   DBI::dbWriteTable(conn = conn, name = table_name, value = x, overwrite = TRUE)
-  # Save, table, keys, and hash
   # Create a hash of the nested data frame
   nested_df <-  x |> 
-    tidyr::nest(.key = .ungrouped_cols)
+    dplyr::group_by(.data[[tar_group_colname]]) |> 
+    tidyr::nest(.key = .nested_data_colname)
   nested_df |> 
     dplyr::mutate(
       "{.table_colname}" :=  table_name, 
-      "{.hash_colname}" := digest::digest(.data[[.ungrouped_cols]], algo = algo), 
-      "{.ungrouped_cols}" := NULL
+      "{.nested_data_hash_colname}" := digest::digest(.data[[.nested_data_colname]], algo = .algo), 
+      "{.nested_data_colname}" := NULL
     )
 }
 
 
 load_table_from_hash <- function(a_hash, conn_args, 
-                                 .hash_colname = "group_hash",
+                                 tar_group_colname = "tar_group",
                                  .table_colname = ".table_name",
-                                 .ungrouped_cols = ".ungrouped_cols") {
+                                 .nested_data_colname = ".nested_data_col", 
+                                 .nested_data_hash_colname = ".nested_data_hash_col") {
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(), 
                          dbname = conn_args$dbname, 
                          host = conn_args$host,
@@ -55,17 +60,13 @@ load_table_from_hash <- function(a_hash, conn_args,
   table_name <- a_hash[[.table_colname]] |> 
     unique()
   assertthat::assert_that(length(table_name) == 1)
-  this_tar_group <- a_hash[["tar_group"]] |> 
+  this_tar_group <- a_hash[[tar_group_colname]] |> 
     unique()
   assertthat::assert_that(length(this_tar_group) == 1)
-  grp_vars <- a_hash |> 
-    colnames() |> 
-    setdiff(c(.hash_colname, .table_colname, .ungrouped_cols))
   # Here, we should read only the rows we need to read.
   out <- dplyr::tbl(conn, table_name) |> 
     dplyr::filter(tar_group == this_tar_group) |> 
-    dplyr::collect() |> 
-    dplyr::group_by(!!as.name(grp_vars))
+    dplyr::collect()
 }
 
 
