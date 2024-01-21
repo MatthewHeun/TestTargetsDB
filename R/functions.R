@@ -30,8 +30,11 @@ store_and_return_hash <- function(x, conn_args, table_name,
                          user = conn_args$user)
   on.exit(DBI::dbDisconnect(conn))
   
-  # Eventually, do a replace_join() here
+  # Eventually, do a dplyr::rows_update() here
   DBI::dbWriteTable(conn = conn, name = table_name, value = x, overwrite = TRUE)
+  # dplyr::tbl(conn, table_name) |> 
+  #   dplyr::rows_update(x, by = key_vars)
+  #   dplyr::collect()
   # Create a hash of the nested data frame
   nested_df <-  x |> 
     dplyr::group_by(.data[[tar_group_colname]]) |> 
