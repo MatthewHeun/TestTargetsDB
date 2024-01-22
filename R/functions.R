@@ -49,7 +49,8 @@ store_and_return_hash <- function(x, conn_args, table_name, key_cols,
   
   # Create and return a hash of the nested data frame
   x |> 
-    dplyr::group_by(dplyr::across(dplyr::any_of(c(key_cols, tar_group_colname)))) |> 
+    dplyr::group_by(dplyr::across(dplyr::any_of(c(key_cols, tar_group_colname)))) |>
+    # dplyr::group_by(!!as.name(key_cols), !!as.name(tar_group_colname)) |> 
     tidyr::nest(.key = .nested_data_hash_colname) |> 
     dplyr::mutate(
       "{.table_colname}" :=  table_name, 
@@ -57,6 +58,7 @@ store_and_return_hash <- function(x, conn_args, table_name, key_cols,
     ) |> 
     # Relocate .table_colname to be the the left (first) column in the table.
     dplyr::relocate(dplyr::any_of(.table_colname))
+    # dplyr::relocate(!!as.name(.table_colname))
 }
 
 
@@ -94,7 +96,7 @@ make_df <- function(conn_args, key_cols) {
                   "B", "Final", 3, 
                   "B", "Useful", 4, 
                   "C", "Final", 5) |> 
-    dplyr::group_by(dplyr::across(dplyr::all_of(key_cols))) |> 
+    dplyr::group_by(dplyr::across(dplyr::all_of(key_cols))) |>
     targets::tar_group() |> 
     store_and_return_hash(conn_args = conn_args, table_name = "df", key_cols = key_cols)
 }
