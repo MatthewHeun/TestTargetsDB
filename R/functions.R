@@ -30,15 +30,19 @@ store_and_return_hash <- function(x, conn_args, table_name, key_cols,
                          user = conn_args$user)
   on.exit(DBI::dbDisconnect(conn))
 
-  # DBI::dbWriteTable(conn, name = table_name, value = x, overwrite = TRUE)  
-  
   if (!(table_name %in% DBI::dbListTables(conn))) {
-    # Maybe also check that key_cols are in table_name.
-    # If not, throw a scary warning and maybe tell the user how to start over.
     # Maybe write a function that both destroys the targets cache and deletes all tables in the DB.
     DBI::dbWriteTable(conn, name = table_name, value = x)
   } else {
-    dplyr::tbl(conn, table_name) |>
+    # Check that key_cols are in table_name.
+    # If not, throw a scary warning and maybe tell the user how to start over.
+    the_table <- dplyr::tbl(conn, table_name)
+    cnames <- the_table |> 
+      colnames()
+    if (!(all(key_cols %in% cnames))) {
+      stop(paste("key_cols", paste(key_cols, collapse = ", "), "are not in the table named", table_name))
+    }
+    the_table |>
       dplyr::rows_upsert(x, by = dplyr::all_of(c(key_cols, tar_group_colname)), copy = TRUE) |>
       dplyr::compute()
   }
