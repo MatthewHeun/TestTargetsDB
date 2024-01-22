@@ -30,20 +30,18 @@ store_and_return_hash <- function(x, conn_args, table_name, key_cols,
                          user = conn_args$user)
   on.exit(DBI::dbDisconnect(conn))
 
-  DBI::dbWriteTable(conn, name = table_name, value = x, overwrite = TRUE)  
+  # DBI::dbWriteTable(conn, name = table_name, value = x, overwrite = TRUE)  
   
-  # if (!(table_name %in% DBI::dbListTables(conn))) {
-  #   # Maybe also check that key_cols are in table_name.
-  #   # If not, throw a scary warning and maybe tell the user how to start over.
-  #   # Maybe write a function that both destroys the targets cache and deletes all tables in the DB.
-  #   DBI::dbWriteTable(conn, name = table_name, value = x)
-  # } else {
-  #   # DBI::dbWriteTable(conn = conn, name = table_name, value = x, overwrite = TRUE)
-  #   # Eventually, do a dplyr::rows_upsert() here
-  #   dplyr::tbl(conn, table_name) |>
-  #     dplyr::rows_upsert(x, by = key_cols) |> 
-  #     dplyr::collect()
-  # }
+  if (!(table_name %in% DBI::dbListTables(conn))) {
+    # Maybe also check that key_cols are in table_name.
+    # If not, throw a scary warning and maybe tell the user how to start over.
+    # Maybe write a function that both destroys the targets cache and deletes all tables in the DB.
+    DBI::dbWriteTable(conn, name = table_name, value = x)
+  } else {
+    dplyr::tbl(conn, table_name) |>
+      dplyr::rows_upsert(x, by = dplyr::all_of(c(key_cols, tar_group_colname)), copy = TRUE) |>
+      dplyr::compute()
+  }
   
   # Create and return a hash of the nested data frame
   x |> 
