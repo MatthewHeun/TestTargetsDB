@@ -49,7 +49,7 @@ store_and_return_hash <- function(x, conn_args, table_name, key_cols,
   
   # Create and return a hash of the nested data frame
   x |> 
-    dplyr::group_by(dplyr::across(dplyr::any_of(c(key_cols, tar_group_colname)))) |>
+    dplyr::group_by(!!as.name(tar_group_colname)) |>
     # dplyr::group_by(!!as.name(key_cols), !!as.name(tar_group_colname)) |> 
     tidyr::nest(.key = .nested_data_hash_colname) |> 
     dplyr::mutate(
@@ -73,7 +73,7 @@ load_table_from_hash <- function(a_hash, conn_args, key_cols,
                          port = conn_args$port, 
                          user = conn_args$user)
   on.exit(DBI::dbDisconnect(conn))
-  
+print(a_hash)
   table_name <- a_hash[[.table_colname]] |> 
     unique()
   assertthat::assert_that(length(table_name) == 1)
@@ -96,7 +96,7 @@ make_df <- function(conn_args, key_cols) {
                   "B", "Final", 3, 
                   "B", "Useful", 4, 
                   "C", "Final", 5) |> 
-    dplyr::group_by(dplyr::across(dplyr::all_of(key_cols))) |>
+    dplyr::group_by(Country) |>
     targets::tar_group() |> 
     store_and_return_hash(conn_args = conn_args, table_name = "df", key_cols = key_cols)
 }
@@ -107,5 +107,6 @@ process <- function(DF, conn_args, key_cols) {
     load_table_from_hash(conn_args = conn_args, key_cols = key_cols) |> 
     dplyr::mutate(
       valplus1 = val + 1
-    )
+    ) |> 
+    store_and_return_hash(conn_args = conn_args, table_name = "Processed", key_cols = key_cols)
 }
