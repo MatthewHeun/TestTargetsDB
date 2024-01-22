@@ -42,11 +42,19 @@ store_and_return_hash <- function(x, conn_args, table_name, key_cols,
     if (!(all(key_cols %in% cnames))) {
       stop(paste("key_cols", paste(key_cols, collapse = ", "), "are not in the table named", table_name))
     }
-    the_table |>
-      dplyr::rows_upsert(x, by = dplyr::all_of(c(key_cols, tar_group_colname)), copy = TRUE) |>
-      dplyr::compute()
+print("before rows_upsert. x:")
+print(x)
+print("before rows_upsert. DB table:")
+print(DBI::dbReadTable(conn, table_name))
+    res <- the_table |>
+      dplyr::rows_upsert(x, by = dplyr::all_of(c(key_cols, tar_group_colname)), copy = TRUE)
+    dplyr::compute(res)
+print("after rows_upsert. DB table:")
+print(DBI::dbReadTable(conn, table_name))
+print("after rows_upsert. res:")
+print(res)
   }
-  
+
   # Create and return a hash of the nested data frame
   x |> 
     dplyr::group_by(!!as.name(tar_group_colname)) |>
@@ -73,7 +81,6 @@ load_table_from_hash <- function(a_hash, conn_args, key_cols,
                          port = conn_args$port, 
                          user = conn_args$user)
   on.exit(DBI::dbDisconnect(conn))
-print(a_hash)
   table_name <- a_hash[[.table_colname]] |> 
     unique()
   assertthat::assert_that(length(table_name) == 1)
@@ -103,10 +110,10 @@ make_df <- function(conn_args, key_cols) {
 
 
 process <- function(DF, conn_args, key_cols) {
-  DF |> 
-    load_table_from_hash(conn_args = conn_args, key_cols = key_cols) |> 
+  DF |>
+    load_table_from_hash(conn_args = conn_args, key_cols = key_cols) |>
     dplyr::mutate(
       valplus1 = val + 1
-    ) |> 
+    ) |>
     store_and_return_hash(conn_args = conn_args, table_name = "Processed", key_cols = key_cols)
 }
