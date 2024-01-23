@@ -42,16 +42,18 @@ store_and_return_hash <- function(x, conn_args, table_name, key_cols,
     if (!(all(key_cols %in% cnames))) {
       stop(paste("key_cols", paste(key_cols, collapse = ", "), "are not in the table named", table_name))
     }
-print("before rows_upsert. x:")
+print("before rows_upsert(). x:")
 print(x)
-print("before rows_upsert. DB table:")
+print("before rows_upsert(). DB table:")
 print(DBI::dbReadTable(conn, table_name))
     res <- the_table |>
-      dplyr::rows_upsert(x, by = dplyr::all_of(c(key_cols, tar_group_colname)), copy = TRUE)
-    dplyr::compute(res)
-print("after rows_upsert. DB table:")
+      dplyr::rows_upsert(x, by = dplyr::all_of(c(key_cols, tar_group_colname)), 
+                         copy = TRUE,
+                         in_place = TRUE) |> 
+      dplyr::compute()
+print("after rows_upsert(). DB table:")
 print(DBI::dbReadTable(conn, table_name))
-print("after rows_upsert. res:")
+print("after rows_upsert(). res:")
 print(res)
   }
 

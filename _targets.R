@@ -18,7 +18,8 @@ tar_source()
 # source("other_functions.R") # Source other scripts as needed.
 
 conn_args <- list(dbname = "playground",
-                  host = "eviz.cs.calvin.edu",
+                  # host = "eviz.cs.calvin.edu",
+                  host = "153.106.113.125",
                   port = 5432,
                   user = "mkh2")
 
