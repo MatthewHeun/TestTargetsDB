@@ -18,14 +18,14 @@ tar_source()
 # source("other_functions.R") # Source other scripts as needed.
 
 conn_args <- list(dbname = "playground",
-                  # host = "eviz.cs.calvin.edu",
-                  host = "153.106.113.125",
+                  host = "eviz.cs.calvin.edu",
+                  # host = "153.106.113.125",
                   port = 5432,
                   user = "mkh2")
 
 # dbDisconnect(conn)
 
-# Replace the target list below with your own:
+# target list
 list(
   tar_target(
     name = KeyCols, 
