@@ -1,11 +1,19 @@
 library(DBI)
 
 
-conn <- dbConnect(drv = RPostgres::Postgres(), 
-                  dbname = "playground", 
-                  host = "eviz.cs.calvin.edu",
-                  port = 5432, 
-                  user = "mkh2")
+
+conn <- connections::connection_open(drv = RPostgres::Postgres(), 
+                                     dbname = "playground", 
+                                     host = "eviz.cs.calvin.edu",
+                                     port = 5432, 
+                                     user = "mkh2")
+
+
+# conn <- dbConnect(drv = RPostgres::Postgres(), 
+#                   dbname = "playground", 
+#                   host = "eviz.cs.calvin.edu",
+#                   port = 5432, 
+#                   user = "mkh2")
 
 dbListTables(conn)
 
