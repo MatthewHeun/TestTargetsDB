@@ -2,18 +2,21 @@ library(DBI)
 
 
 
-conn <- connections::connection_open(drv = RPostgres::Postgres(), 
-                                     dbname = "playground", 
-                                     host = "eviz.cs.calvin.edu",
-                                     port = 5432, 
-                                     user = "mkh2")
+# This version puts the connection in the Connections window of RStudio.
+# But it lacks other features, such as the ability to list tables, etc.
+# that are available through the DBI package.
+# conn <- connections::connection_open(drv = RPostgres::Postgres(), 
+#                                      dbname = "playground", 
+#                                      host = "eviz.cs.calvin.edu",
+#                                      port = 5432, 
+#                                      user = "mkh2")
 
 
-# conn <- dbConnect(drv = RPostgres::Postgres(), 
-#                   dbname = "playground", 
-#                   host = "eviz.cs.calvin.edu",
-#                   port = 5432, 
-#                   user = "mkh2")
+conn <- dbConnect(drv = RPostgres::Postgres(),
+                  dbname = "playground",
+                  host = "eviz.cs.calvin.edu",
+                  port = 5432,
+                  user = "mkh2")
 
 dbListTables(conn)
 
@@ -73,3 +76,4 @@ dbReadTable(conn, "df")
 dbRemoveTable(conn, "df")
 
 dbDisconnect(conn)
+
