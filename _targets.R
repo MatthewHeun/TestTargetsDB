@@ -4,6 +4,7 @@
 #   https://books.ropensci.org/targets/walkthrough.html#inspect-the-pipeline
 
 # Load packages required to define the pipeline:
+library(DBI)
 library(targets)
 # library(tarchetypes) # Load other packages as needed.
 
@@ -16,14 +17,28 @@ tar_option_set(
 tar_source()
 # source("other_functions.R") # Source other scripts as needed.
 
-# Replace the target list below with your own:
+conn_args <- list(dbname = "playground",
+                  host = "eviz.cs.calvin.edu",
+                  # host = "153.106.113.125",
+                  port = 5432,
+                  user = "mkh2")
+
+# dbDisconnect(conn)
+
+# target list
 list(
   tar_target(
-    name = data,
-    command = make_data(100)
+    name = KeyCols, 
+    command = c("Country", "Last.stage")
   ),
   tar_target(
-    name = model,
-    command = coefficients(lm(y ~ x, data = data))
+    name = DF, 
+    command = make_df(conn_args, key_cols = KeyCols)
+  ), 
+  tar_target(
+    name = Processed, 
+    command = process(DF, conn_args, key_cols = KeyCols), 
+    pattern = map(DF), 
+    iteration = "group"
   )
 )

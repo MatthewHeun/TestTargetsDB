@@ -1,0 +1,57 @@
+library(DBI)
+conn <- dbConnect(drv = RPostgres::Postgres(),
+                  dbname = "playground",
+                  host = "eviz.cs.calvin.edu",
+                  port = 5432,
+                  user = "mkh2")
+dbListTables(conn)
+
+# Read the sheets in the CL-PFU data model tables.xlsx spreadsheet
+data_model_path <- file.path("design", "CL-PFU data model.xlsx")
+table_names <- readxl::excel_sheets(data_model_path) |> 
+  setdiff("ForeignKeys")
+data_model <- table_names |> 
+  setNames(table_names) |> 
+  lapply(FUN = function(this_sheet) {
+    readxl::read_excel(path = data_model_path, sheet = this_sheet)
+  }) |> 
+  dm::new_dm()
+
+# Add primary keys
+pk_suffix <- "ID"
+for (this_table in table_names) {
+  this_pk_col <- paste0(this_table, pk_suffix)
+  data_model <- data_model |> 
+    dm::dm_add_pk(table = {{this_table}}, columns = {{this_pk_col}}, autoincrement = TRUE)
+}
+# Add foreign keys
+fk_table <- readxl::read_excel(path = data_model_path, sheet = "ForeignKeys")
+for (this_row_num in 1:nrow(fk_table)) {
+  this_row <- dplyr::slice(fk_table, this_row_num)
+  child_table <- this_row$child_table
+  child_fk_col <- this_row$child_fk_col
+  parent_table <- this_row$parent_table
+  parent_table_pk_col <- this_row$parent_pk_col
+  data_model <- data_model |> 
+    dm::dm_add_fk(table = {{child_table}},
+                  columns = {{child_fk_col}}, 
+                  ref_table = {{parent_table}},
+                  ref_columns = {{parent_table_pk_col}})
+}
+
+
+# Because we used dm::new_dm(), we should do a validation step
+dm::dm_validate(data_model)
+
+# View the data model
+data_model <- data_model |> 
+  dm::dm_set_colors(blue = IEAMW, red = EnergyType, 
+                    darkgreen = ECCStage, lightyellow = LedgerSide)
+dm::dm_draw(data_model, view_type = "all")
+
+# Upload to database
+dm::copy_dm_to(dest = conn, dm = data_model, temporary = FALSE)
+
+dbListTables(conn)
+
+dbDisconnect(conn)
