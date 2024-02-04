@@ -46,7 +46,8 @@ dm::dm_validate(data_model)
 # View the data model
 data_model <- data_model |> 
   dm::dm_set_colors(blue = IEAMW, red = EnergyType, 
-                    darkgreen = ECCStage, lightyellow = LedgerSide)
+                    darkgreen = ECCStage, lightyellow = LedgerSide, 
+                    pink = Country)
 dm::dm_draw(data_model, view_type = "all")
 
 # Upload to database
