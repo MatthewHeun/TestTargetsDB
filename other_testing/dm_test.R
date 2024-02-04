@@ -38,8 +38,8 @@ dm::dm_validate(data_model)
 
 # View the data model
 data_model <- data_model |> 
-  dm::dm_set_colors(blue = IEAMW, red = EnergyType, 
-                    darkgreen = ECCStage, lightyellow = LedgerSide, 
+  dm::dm_set_colors(blue = IEAMW, red = Energy.type, 
+                    darkgreen = ECC.stage, lightyellow = Ledger.side, 
                     pink = Country, black = PSUT, 
                     purple = Year)
 dm::dm_draw(data_model, view_type = "all")
@@ -60,29 +60,53 @@ data_model |>
 # Look at the PSUT data frame. 
 # Does it still have strings in foreign key columns?
 # Or have the strings been converted to integers?
-# It has strings
+# It has strings.
 data_model |> 
   dm::pull_tbl(PSUT)
 
 # Try to add a new row to PSUT. 
-# Does it require integers or strings in foreign key cols? 
-# Why is the PSUTID value required? Seems like a lot of janitorial work to keep that straight.
-new_psut_data <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~EnergyType, ~LastStage, ~IEAMW, ~Value, 
-                                               1, "USA", 1960, "Energy", "Final", "IEA", 43, 
-                                               11, "USA", 1961, "Exergy", "Useful", "MW", 44))
+# Don't include PSUTID
+new_psut_data <- dm::dm(PSUT = tibble::tribble(~Country, ~Year, ~Energy.type, ~Last.stage, ~IEAMW, ~Value, 
+                                               "USA", 1960, "Energy", "Final", "IEA", 43, 
+                                               "USA", 1961, "Exergy", "Useful", "MW", 44))
+# Fails, because PSUTID is not present.
 data_model <- data_model |> 
   dm::dm_rows_upsert(new_psut_data, in_place = FALSE)
+
+orig_size <- object.size(data_model)
+
+# Does it require integers or strings in foreign key cols? 
+# Why is the PSUTID value required? Seems like a lot of janitorial work to keep that straight.
+new_psut_data <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~Energy.type, ~Last.stage, ~IEAMW, ~Value, 
+                                               1, "USA", 1960, "Energy", "Final", "IEA", 43, 
+                                               11, "USA", 1961, "Exergy", "Useful", "MW", 44))
+new_psut_data_size <- object.size(new_psut_data)
+expected_new_size <- orig_size + new_psut_data_size
+
+data_model <- data_model |> 
+  dm::dm_rows_upsert(new_psut_data, in_place = FALSE)
+new_size <- object.size(data_model)
+# Calculate the compression provided by the data model.
+# There is significant savings.
+expected_new_size - new_size
+# This is the growth:
+new_size - orig_size
+# Compared to the size of the data that was inserted:
+new_psut_data_size
+# So it must be storing only the integers internally.
 
 # Look at it
 data_model |> 
   dm::pull_tbl(PSUT)
 
 # Try to add some data that has a non-existent foreign key value
-new_psut_data_2 <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~EnergyType, ~LastStage, ~IEAMW, ~Value, 
+new_psut_data_2 <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~Energy.type, ~Last.stage, ~IEAMW, ~Value, 
                                                  12, "USA", 1960, "Energy", "Final", "Bogus", 45))
 
 data_model <- data_model |> 
-  dm::dm_rows_upsert(new_psut_data_2, in_place = FALSE)
+  dm::dm_rows_upsert(new_psut_data_2)
+dm::dm_validate(data_model)
+
 
 # Look at it. "Bogus" is in the IEAMW column.
 data_model |> 
@@ -90,6 +114,22 @@ data_model |>
 # Bogus was not added to the IEAMW column of the IEAMW table.
 data_model |> 
   dm::pull_tbl(IEAMW)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 library(DBI)
