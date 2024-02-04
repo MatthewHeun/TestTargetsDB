@@ -40,7 +40,8 @@ dm::dm_validate(data_model)
 data_model <- data_model |> 
   dm::dm_set_colors(blue = IEAMW, red = EnergyType, 
                     darkgreen = ECCStage, lightyellow = LedgerSide, 
-                    pink = Country, black = PSUT)
+                    pink = Country, black = PSUT, 
+                    purple = Year)
 dm::dm_draw(data_model, view_type = "all")
 
 
