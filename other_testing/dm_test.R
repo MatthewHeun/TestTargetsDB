@@ -50,6 +50,16 @@ data_model <- data_model |>
                     pink = Country, black = PSUT)
 dm::dm_draw(data_model, view_type = "all")
 
+
+# Look at the PSUT data frame. 
+# Does it still have strings in foreign key columns?
+# Or have the strings been converted to integers?
+
+# Try to add a new row to PSUT. 
+# Does it require integers or strings in foreign key cols?
+
+
+
 # Upload to database
 dm::copy_dm_to(dest = conn, dm = data_model, temporary = FALSE)
 
