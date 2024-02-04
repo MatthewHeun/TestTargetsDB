@@ -1,10 +1,3 @@
-library(DBI)
-conn <- dbConnect(drv = RPostgres::Postgres(),
-                  dbname = "playground",
-                  host = "eviz.cs.calvin.edu",
-                  port = 5432,
-                  user = "mkh2")
-dbListTables(conn)
 
 # Read the sheets in the CL-PFU data model tables.xlsx spreadsheet
 data_model_path <- file.path("design", "CL-PFU data model.xlsx")
@@ -51,13 +44,60 @@ data_model <- data_model |>
 dm::dm_draw(data_model, view_type = "all")
 
 
+# Get foreign key columns for the PSUT table.
+# This will be quite handy, because 
+# we can nest all other columns 
+# besides the foreign key cols and
+# generate a hash for the targets pipeline.
+data_model |> 
+  dm::dm_get_all_fks() |> 
+  dplyr::filter(child_table == "PSUT") |> 
+  dplyr::select(child_fk_cols) |> 
+  unlist() |> 
+  unname()
+
 # Look at the PSUT data frame. 
 # Does it still have strings in foreign key columns?
 # Or have the strings been converted to integers?
+# It has strings
+data_model |> 
+  dm::pull_tbl(PSUT)
 
 # Try to add a new row to PSUT. 
-# Does it require integers or strings in foreign key cols?
+# Does it require integers or strings in foreign key cols? 
+# Why is the PSUTID value required? Seems like a lot of janitorial work to keep that straight.
+new_psut_data <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~EnergyType, ~LastStage, ~IEAMW, ~Value, 
+                                               1, "USA", 1960, "Energy", "Final", "IEA", 43, 
+                                               11, "USA", 1961, "Exergy", "Useful", "MW", 44))
+data_model <- data_model |> 
+  dm::dm_rows_upsert(new_psut_data, in_place = FALSE)
 
+# Look at it
+data_model |> 
+  dm::pull_tbl(PSUT)
+
+# Try to add some data that has a non-existent foreign key value
+new_psut_data_2 <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~EnergyType, ~LastStage, ~IEAMW, ~Value, 
+                                                 12, "USA", 1960, "Energy", "Final", "Bogus", 45))
+
+data_model <- data_model |> 
+  dm::dm_rows_upsert(new_psut_data_2, in_place = FALSE)
+
+# Look at it. "Bogus" is in the IEAMW column.
+data_model |> 
+  dm::pull_tbl(PSUT)
+# Bogus was not added to the IEAMW column of the IEAMW table.
+data_model |> 
+  dm::pull_tbl(IEAMW)
+
+
+library(DBI)
+conn <- dbConnect(drv = RPostgres::Postgres(),
+                  dbname = "playground",
+                  host = "eviz.cs.calvin.edu",
+                  port = 5432,
+                  user = "mkh2")
+dbListTables(conn)
 
 
 # Upload to database
