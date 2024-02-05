@@ -97,7 +97,7 @@ new_psut_data_size <- object.size(list(12, "USA", 1960, "Energy", "Final", "Bogu
 expected_new_size <- orig_size + new_psut_data_size
 
 new_psut_data_2 <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~Energy.type, ~Last.stage, ~IEAMW, ~Value, 
-                                                 12, "USA", 1960, "Energy", "Final", "Bogus", 45))
+                                                 12,      1,         1960, 1,            2,           42,     45))
 
 data_model <- data_model |> 
   dm::dm_rows_upsert(new_psut_data_2)
@@ -132,14 +132,17 @@ conn <- dbConnect(drv = RPostgres::Postgres(),
                   host = "eviz.cs.calvin.edu",
                   port = 5432,
                   user = "mkh2")
-dbListTables(conn)
-
+table_names <- dbListTables(conn)
 # Remove all tables
-
+for (this_table_name in table_names) {
+  dbRemoveTable(conn, this_table_name)
+}
 
 # Upload the data model to database
-dm::copy_dm_to(dest = conn, dm = data_model, temporary = FALSE)
+dm::copy_dm_to(dest = conn, dm = data_model, temporary = FALSE, )
 dbListTables(conn)
+
+dbReadTable(conn, "ECC.stage")
 
 # Add a row to PSUT
 
