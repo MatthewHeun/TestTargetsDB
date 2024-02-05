@@ -73,18 +73,35 @@ new_psut_data <- dm::dm(PSUT = tibble::tribble(~Country, ~Year, ~Energy.type, ~L
 data_model <- data_model |> 
   dm::dm_rows_upsert(new_psut_data, in_place = FALSE)
 
-orig_size <- object.size(data_model)
 
 # Does it require integers or strings in foreign key cols? 
 # Why is the PSUTID value required? Seems like a lot of janitorial work to keep that straight.
 new_psut_data <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~Energy.type, ~Last.stage, ~IEAMW, ~Value, 
                                                1, "USA", 1960, "Energy", "Final", "IEA", 43, 
                                                11, "USA", 1961, "Exergy", "Useful", "MW", 44))
-new_psut_data_size <- object.size(new_psut_data)
-expected_new_size <- orig_size + new_psut_data_size
 
 data_model <- data_model |> 
   dm::dm_rows_upsert(new_psut_data, in_place = FALSE)
+
+# Look at it
+data_model |> 
+  dm::pull_tbl(PSUT)
+
+
+# Add a new row (single) and compare sizes
+
+orig_size <- object.size(data_model)
+
+# Try to add some data that has a non-existent foreign key value
+new_psut_data_size <- object.size(list(12, "USA", 1960, "Energy", "Final", "Bogus", 45))
+expected_new_size <- orig_size + new_psut_data_size
+
+new_psut_data_2 <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~Energy.type, ~Last.stage, ~IEAMW, ~Value, 
+                                                 12, "USA", 1960, "Energy", "Final", "Bogus", 45))
+
+data_model <- data_model |> 
+  dm::dm_rows_upsert(new_psut_data_2)
+
 new_size <- object.size(data_model)
 # Calculate the compression provided by the data model.
 # There is significant savings.
@@ -93,22 +110,13 @@ expected_new_size - new_size
 new_size - orig_size
 # Compared to the size of the data that was inserted:
 new_psut_data_size
-# So it must be storing only the integers internally.
+# So it must be storing only the integer keys internally.
 
-# Look at it
-data_model |> 
-  dm::pull_tbl(PSUT)
-
-# Try to add some data that has a non-existent foreign key value
-new_psut_data_2 <- dm::dm(PSUT = tibble::tribble(~PSUTID, ~Country, ~Year, ~Energy.type, ~Last.stage, ~IEAMW, ~Value, 
-                                                 12, "USA", 1960, "Energy", "Final", "Bogus", 45))
-
-data_model <- data_model |> 
-  dm::dm_rows_upsert(new_psut_data_2)
+# Make sure that the mode is still valid
 dm::dm_validate(data_model)
 
 
-# Look at it. "Bogus" is in the IEAMW column.
+# Look at it. Weirdly, "Bogus" was accepted in the IEAMW column.
 data_model |> 
   dm::pull_tbl(PSUT)
 # Bogus was not added to the IEAMW column of the IEAMW table.
@@ -116,21 +124,7 @@ data_model |>
   dm::pull_tbl(IEAMW)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Try this all in a database
 
 library(DBI)
 conn <- dbConnect(drv = RPostgres::Postgres(),
@@ -140,10 +134,18 @@ conn <- dbConnect(drv = RPostgres::Postgres(),
                   user = "mkh2")
 dbListTables(conn)
 
+# Remove all tables
 
-# Upload to database
+
+# Upload the data model to database
 dm::copy_dm_to(dest = conn, dm = data_model, temporary = FALSE)
-
 dbListTables(conn)
+
+# Add a row to PSUT
+
+# Pull some tables
+
+
+
 
 dbDisconnect(conn)
